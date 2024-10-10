@@ -1,0 +1,40 @@
+version: "3.5"
+services:
+  interval-postgresql:
+    container_name: interval-postgresql
+    environment:
+      - POSTGRES_USER=interval
+      - POSTGRES_PASSWORD=interval
+    image: postgres:12
+    networks:
+      - interval-network
+    expose:
+      - 5432
+    volumes:
+      - interval-data:/var/lib/postgresql/data
+
+  interval:
+    entrypoint: /bin/sh -c "apk update; apk add postgresql; interval-server db-init --skip-create; interval-server start"
+    container_name: interval
+    depends_on:
+      - interval-postgresql
+    environment:
+      - APP_URL=http://localhost:3000
+      - DATABASE_URL=postgresql://interval:interval@interval-postgresql:5432/interval
+      - SECRET=123123
+      - WSS_API_SECRET=123123
+      - AUTH_COOKIE_SECRET=12312312312312312312312312312312
+    image: alexarena/interval-server:latest
+    networks:
+      - interval-network
+    ports:
+      - 3000:3000
+      - 3033:3033
+      
+networks:
+  interval-network:
+    driver: bridge
+    name: interval-network
+
+volumes:
+  interval-data:
